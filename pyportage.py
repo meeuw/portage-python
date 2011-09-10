@@ -33,7 +33,7 @@ class XPAK():
 
 def splitebuildname(d):
     ret = {}
-    m = re.match('(>=|<=|>|<|)([^/]*)/([a-z-]*)([^:-]*)(-[^:]*)?(:.*)?', d)
+    m = re.match('(>=|<=|>|<|)([^/]*)/((?:[0-9a-zA-Z_+]-|[0-9a-zA-Z_+])*)-([^:-]*)(-[^:]*)?(:.*)?', d)
     ret['cat'] = m.groups()[1]
     ret['pn'] = m.groups()[2]
     if ret['pn'].endswith('-'): ret['pn'] = ret['pn'][:-1]
@@ -77,16 +77,23 @@ def emerge(args):
             return [stdout, stderr]
 
 if __name__ == "__main__":
-    x = XPAK(sys.argv[1]+'.tbz2')
-    os.makedirs('/usr/portage/sys-apps/portage')
-    ebuild = '/usr/portage/sys-apps/portage/'+sys.argv[1]+'.ebuild'
-    f = open(ebuild, 'w')
-    f.write('''RDEPEND="%s"
+    if sys.argv[1] == 'splitebuildname':
+        print splitebuildname(sys.argv[2])
+    elif sys.argv[1] == 'RDEPEND':
+        pn = sys.argv[2]
+        p = sys.argv[3]
+        x = XPAK(p+'.tbz2')
+        try:
+            os.makedirs('/usr/portage/what-ever/'+pn)
+        except: pass
+        ebuild = '/usr/portage/sys-apps/'+pn+'/'+p+'.ebuild'
+        f = open(ebuild, 'w')
+        f.write('''RDEPEND="%s"
 SLOT="%s"
 EAPI="%s"''' % (x['RDEPEND'][:-1], x['SLOT'][:-1], x['EAPI'][:-1]))
-    f.close()
-    ebuild_digest(ebuild)
+        f.close()
+        ebuild_digest(ebuild)
 
-    for line in emerge(['-op', 'sys-apps/portage'])[1].splitlines():
-        if line.startswith('[ebuild'): print splitebuildname(re.split('\[ebuild.*\] ', line)[1][:-1])['pn']
+        for line in emerge(['-op', 'sys-apps/portage'])[1].splitlines():
+            if line.startswith('[ebuild'): print splitebuildname(re.split('\[ebuild.*\] ', line)[1][:-1])['pn']
 
