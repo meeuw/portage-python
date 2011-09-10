@@ -2,6 +2,7 @@ import subprocess
 import re
 import os
 import struct
+import sys
 
 class XPAK():
     def __getitem__(self, index):
