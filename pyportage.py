@@ -66,7 +66,7 @@ def ebuild_digest(ebuild):
 
 def emerge(args):
     fcat = open('/usr/portage/profiles/categories','w')
-    fcat.write('sys-apps\n')
+    fcat.write('what-ever\n')
     fcat.flush()
     while 1:
         p = subprocess.Popen(['emerge']+args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -84,10 +84,7 @@ def emerge(args):
                     ebuild = '/usr/portage/%(cat)s/%(pn)s/%(pn)s-%(pv)s.ebuild' % s
                     if d[:2] == '>=':
                         pass
-                    if s['slot']:
-                        ebuild_data = 'SLOT="%s"' % s['slot'][1:]
-                    else:
-                        ebuild_data = 'SLOT="0"'
+                    ebuild_data = 'SLOT="%s"' % s['slot']
                     os.makedirs('/usr/portage/%(cat)s/%(pn)s' % s)
                     f = open(ebuild, 'w').write(ebuild_data)
                     ebuild_digest(ebuild)
@@ -111,6 +108,6 @@ EAPI="%s"''' % (x['RDEPEND'][:-1], x['SLOT'][:-1], x['EAPI'][:-1]))
         f.close()
         ebuild_digest(ebuild)
 
-        for line in emerge(['-op', 'sys-apps/portage'])[1].splitlines():
+        for line in emerge(['-op', 'what-ever/portage'])[1].splitlines():
             if line.startswith('[ebuild'): print splitebuildname(re.split('\[ebuild.*\] ', line)[1][:-1])['pn']
 
