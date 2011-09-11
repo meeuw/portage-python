@@ -10,8 +10,7 @@ class XPAK():
     def __getitem__(self, index):
         self.f.seek(-self.data_len-16 + self.index[index][0],2)
         return self.f.read(self.index[index][1])
-    def __init__(self, filename):
-        self.f = open(filename)
+    def __init__(self, f):
         self.f.seek(-4, 2)
         if self.f.read(4) != 'STOP':
             print 'oops'
@@ -97,7 +96,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'RDEPEND':
         pn = sys.argv[2]
         p = sys.argv[3]
-        x = XPAK(p+'.tbz2')
+        x = XPAK(open(p+'.tbz2'))
         for dir in glob.glob('/usr/portage/*-*'): shutil.rmtree(dir)
         os.makedirs('/usr/portage/what-ever/'+pn)
         ebuild = '/usr/portage/what-ever/'+pn+'/'+p+'.ebuild'
