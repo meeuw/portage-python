@@ -3,6 +3,8 @@ import re
 import os
 import struct
 import sys
+import glob
+import shutil
 
 class XPAK():
     def __getitem__(self, index):
@@ -33,13 +35,29 @@ class XPAK():
 
 def splitebuildname(d):
     ret = {}
-    m = re.match('(>=|<=|>|<|)([^/]*)/((?:[0-9a-zA-Z_+]-|[0-9a-zA-Z_+])*)-([^:-]*)(-[^:]*)?(:.*)?', d)
-    ret['cat'] = m.groups()[1]
-    ret['pn'] = m.groups()[2]
-    if ret['pn'].endswith('-'): ret['pn'] = ret['pn'][:-1]
-    ret['pv'] = m.groups()[3]
-    if not ret['pv']: ret['pv'] = '0'
-    ret['slot'] = m.groups()[5]
+    if d.startswith('>=') or d.startswith('<='):
+        ret['operator'] = d[:2]
+        d = d[2:]
+    if d.startswith('>') or d.startswith('<'):
+        ret['operator'] = d[0]
+        d = d[1:]
+    if '/' in d:
+        s = d.split('/')
+        ret['cat'] = s[0]
+        d = s[1]
+    if ':' in d:
+        s = d.split(':')
+        ret['slot'] = s[1]
+        d = s[0]
+    else:
+        ret['slot'] = '0'
+    m = re.match('(.*)-([0-9].*)', d)
+    if m:
+        ret['pn'] = m.groups()[0]
+        ret['pv'] = m.groups()[1]
+    else:
+        ret['pn'] = d
+        ret['pv'] = 0
     return ret
 
 def ebuild_digest(ebuild):
@@ -83,10 +101,9 @@ if __name__ == "__main__":
         pn = sys.argv[2]
         p = sys.argv[3]
         x = XPAK(p+'.tbz2')
-        try:
-            os.makedirs('/usr/portage/what-ever/'+pn)
-        except: pass
-        ebuild = '/usr/portage/sys-apps/'+pn+'/'+p+'.ebuild'
+        for dir in glob.glob('/usr/portage/*-*'): shutil.rmtree(dir)
+        os.makedirs('/usr/portage/what-ever/'+pn)
+        ebuild = '/usr/portage/what-ever/'+pn+'/'+p+'.ebuild'
         f = open(ebuild, 'w')
         f.write('''RDEPEND="%s"
 SLOT="%s"
