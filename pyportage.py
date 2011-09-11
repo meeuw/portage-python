@@ -11,6 +11,7 @@ class XPAK():
         self.f.seek(-self.data_len-16 + self.index[index][0],2)
         return self.f.read(self.index[index][1])
     def __init__(self, f):
+        self.f = f
         self.f.seek(-4, 2)
         if self.f.read(4) != 'STOP':
             print 'oops'
