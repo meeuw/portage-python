@@ -1,0 +1,3 @@
+This script provides a python wrapper for the emerge command of portage, and
+work with the output from portage. It doesn't require /usr/portage directory,
+it creates missing ebuilds by creating dummy ebuild files to make emerge happy.
