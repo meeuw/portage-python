@@ -64,6 +64,14 @@ def ebuild_digest(ebuild):
     devnull = open('/dev/null', 'w')
     subprocess.Popen(['ebuild',ebuild,'digest'], stdout=devnull, stderr=devnull).communicate()
 
+def dummyebuild(d):
+    s = splitebuildname(d)
+    ebuild = '/usr/portage/%(cat)s/%(pn)s/%(pn)s-%(pv)s.ebuild' % s
+    ebuild_data = 'SLOT="%s"' % s['slot']
+    os.makedirs('/usr/portage/%(cat)s/%(pn)s' % s)
+    f = open(ebuild, 'w').write(ebuild_data)
+    ebuild_digest(ebuild)
+
 def emerge(args):
     fcat = open('/usr/portage/profiles/categories','w')
     fcat.write('what-ever\n')
@@ -80,20 +88,24 @@ def emerge(args):
             for line in stdout.splitlines():
                 if line.startswith('emerge: there are no ebuilds to satisfy "'):
                     d = line.split('"')[1]
-                    s = splitebuildname(d)
-                    ebuild = '/usr/portage/%(cat)s/%(pn)s/%(pn)s-%(pv)s.ebuild' % s
-                    if d[:2] == '>=':
-                        pass
-                    ebuild_data = 'SLOT="%s"' % s['slot']
-                    os.makedirs('/usr/portage/%(cat)s/%(pn)s' % s)
-                    f = open(ebuild, 'w').write(ebuild_data)
-                    ebuild_digest(ebuild)
+                    dummyebuild(d)
+        elif 'or don\'t exist:' in stderr:
+            found = False
+            for line in stderr.splitlines():
+                if found:
+                    ds = line.split(' ')
+                    for d in ds: dummyebuild(d)
+                    break
+                if line.startswith('!!! masked or don\'t exist:'): found = True
         else:
             return [stdout, stderr]
 
 if __name__ == "__main__":
     if sys.argv[1] == 'splitebuildname':
         print splitebuildname(sys.argv[2])
+    elif sys.argv[1] == 'emerge':
+        stdin, stderr = emerge(sys.argv[2:])
+        print stdin, stderr
     elif sys.argv[1] == 'RDEPEND':
         pn = sys.argv[2]
         p = sys.argv[3]
