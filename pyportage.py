@@ -38,7 +38,7 @@ def splitebuildname(d):
     if d.startswith('>=') or d.startswith('<='):
         ret['operator'] = d[:2]
         d = d[2:]
-    if d.startswith('>') or d.startswith('<'):
+    if d.startswith('>') or d.startswith('<') or d.startswith('~'):
         ret['operator'] = d[0]
         d = d[1:]
     if '/' in d:
@@ -107,19 +107,31 @@ if __name__ == "__main__":
         stdin, stderr = emerge(sys.argv[2:])
         print stdin, stderr
     elif sys.argv[1] == 'RDEPEND':
-        pn = sys.argv[2]
         p = sys.argv[3]
-        x = XPAK(open(p+'.tbz2'))
-        for dir in glob.glob('/usr/portage/*-*'): shutil.rmtree(dir)
+        ftbz2 = open(p+'.tbz2')
+        pn = sys.argv[2]
+        x =           XPAK(ftbz2)
+        for dir in glob.glob('/usr/portage/*-*')+glob.glob('/usr/portage/virtual*'): shutil.rmtree(dir)
+        try:
+            os.remove('/usr/portage/profiles/categories')
+        except:
+            pass
         os.makedirs('/usr/portage/what-ever/'+pn)
         ebuild = '/usr/portage/what-ever/'+pn+'/'+p+'.ebuild'
-        f = open(ebuild, 'w')
-        f.write('''RDEPEND="%s"
+        febuild = open(ebuild, 'w')
+        if 'RDEPEND' in x.index: RDEPEND = x['RDEPEND'][:-1]
+        else: RDEPEND = ''
+        febuild.write('''RDEPEND="%s"
 SLOT="%s"
-EAPI="%s"''' % (x['RDEPEND'][:-1], x['SLOT'][:-1], x['EAPI'][:-1]))
-        f.close()
+EAPI="%s"''' % (RDEPEND, x['SLOT'][:-1], x['EAPI'][:-1]))
+        febuild.close()
         ebuild_digest(ebuild)
+        for line in         emerge(['-op', 'what-ever/'+pn])[1].splitlines():
+            if line.startswith('[ebuild'):
+                 print                 splitebuildname(re.split('\[ebuild.*\] ', line)[1][:-1])['pn']
 
-        for line in emerge(['-op', 'what-ever/portage'])[1].splitlines():
-            if line.startswith('[ebuild'): print splitebuildname(re.split('\[ebuild.*\] ', line)[1][:-1])['pn']
-
+        for dir in glob.glob('/usr/portage/*-*')+glob.glob('/usr/portage/virtual'): shutil.rmtree(dir)
+        try:
+            os.remove('/usr/portage/profiles/categories')
+        except:
+            pass
